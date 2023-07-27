@@ -85,14 +85,14 @@ button.addEventListener('click', () => {
 })
 
 document.body.addEventListener('keypress', (event) => {
-    dayList.forEach(li => li.classList= 'dayList')
-    dayList[0].classList = 'listSelected'
     if (event.key == 'Enter') {
         if (cityNameInput.value == '') {
             return
         }else{
-            cityName = cityNameInput.value;
+            dayList.forEach(li => li.classList= 'dayList')
         }
+        dayList[0].classList = 'listSelected'
+        cityName = cityNameInput.value;
         cityLoction(cityName)
     }
 })
