@@ -17,25 +17,48 @@ const dayList = document.querySelectorAll('.dayList');
 
 // # ================ General
 dayList[0].classList = 'listSelected'
-let cityName = 'donzdorf';
+let cityName = 'Berlin';
+cityLoction(cityName)
 
 
 
 // # ================ ANALOG CLOCK
 setInterval(() => {
     const myDate = new Date()
-    const hourDeg = myDate.getHours()* 30
-    const minDeg = myDate.getMinutes()*6
-    const secDeg = myDate.getSeconds()*6
+    const hourDeg = myDate.getHours()
+    const minDeg = myDate.getMinutes()
+    const secDeg = myDate.getSeconds()
 
-    sec.style.transform = `rotateZ(${secDeg}deg)`
-    min.style.transform  = `rotateZ(${minDeg}deg)`
-    hour.style.transform  = `rotateZ(${hourDeg + minDeg/12}deg)`
+    sec.style.transform = `rotateZ(${secDeg * 6}deg)`
+    min.style.transform  = `rotateZ(${minDeg * 6}deg)`
+    hour.style.transform  = `rotateZ(${hourDeg * 30 + minDeg * 6 / 12}deg)`
 
+    let minutes;
+    let seconds;
+    let hours;
 
+    if (myDate.getSeconds() < 10) {
+        seconds = `0${myDate.getSeconds()}`
+    }else{
+        seconds = `${myDate.getSeconds()}`
+    }
+
+    
+    if (myDate.getMinutes() < 10) {
+        minutes = `0${myDate.getMinutes()}`
+    }else{
+        minutes = `${myDate.getMinutes()}`
+    }
+
+    
+    if (myDate.getHours() < 10) {
+        hours = `0${myDate.getHours()}`
+    }else{
+        hours = `${myDate.getHours()}`
+    }
     date.innerHTML = `
     <h1>${myDate.toDateString()}</h1>
-    <h2>${myDate.getHours()} : ${myDate.getMinutes()} : ${myDate.getSeconds()}</h2>
+    <h2>${hours} : ${minutes} : ${seconds}</h2>
     `
 
     
@@ -50,12 +73,9 @@ for (let i = 1; i < 6; i++) {
 
 
 // # ================ WEATHER APP
-
-
-
-
-cityLoction(cityName)
 button.addEventListener('click', () => {
+    dayList.forEach(li => li.classList= 'dayList')
+    dayList[0].classList = 'listSelected'
     if (cityNameInput.value == '') {
         return
     }else{
@@ -71,8 +91,6 @@ document.body.addEventListener('keypress', (event) => {
         }else{
             cityName = cityNameInput.value;
         }
-
-        
         cityLoction(cityName)
     }
 })
@@ -81,26 +99,31 @@ dayList.forEach(list => {
     list.addEventListener('click', (event) => {
         dayList.forEach(li => li.classList= 'dayList')
         event.target.classList = 'listSelected'
-        cityLoction2(cityName)
+        let listValue = list.value
+        if (listValue == -1) {
+            cityLoction(cityName)
+        }else{
+            cityLoction2(cityName, listValue)
+        }
     })
 })
 
 
-// function cityLoction2(cityNamePara) {
-//     fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${cityNamePara},de&appid=${apiKey}`)
-//         .then(response => {
-//             return response.json()
-//         })
-//         .then(location => {
-//             cityInfoOutput.innerHTML =`
-//             <h1>Weather in ${location[0].name}</h1>
-//             <h3>${location[0].state} / ${location[0].country}</h3>
-//             `;
-//             const cityInfoPara = `https://pro.openweathermap.org/data/2.5/forecast/climate?lat=${location[0].lat}&lon=${location[0].lon}&cnt=5&appid=${apiKey}`
-//             cityInfo(cityInfoPara)
-//         })
-//         .catch(error => console.log(error));
-// }
+function cityLoction2(cityNamePara, listValue) {
+    fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${cityNamePara},de&appid=${apiKey}`)
+        .then(response => {
+            return response.json()
+        })
+        .then(location => {
+            cityInfoOutput.innerHTML =`
+            <h1>Weather in ${location[0].name}</h1>
+            <h3>${location[0].state} / ${location[0].country}</h3>
+            `;
+            const cityInfoPara = `http://api.openweathermap.org/data/2.5/forecast?lat=${location[0].lat}&lon=${location[0].lon}&cnt=5&appid=${apiKey}`
+            cityInfo2(cityInfoPara, listValue)
+        })
+        .catch(error => console.log(error));
+}
 
 
 function cityLoction(cityNamePara) {
@@ -132,16 +155,27 @@ function cityInfo(url){
 
 }
 
-function appOutput(data){
-    const temp = ((data.main.temp)-273.15).toFixed(1);
-    const minTemp = ((data.main.temp_min)-273.15).toFixed(1);
-    const maxTemp = ((data.main.temp_max)-273.15).toFixed(1);
-    const description = data.weather[0].description;
-    const humidity = data.main.humidity;
-    const wind = data.wind.speed;
+function cityInfo2(url, listValue){
+    fetch(url)
+            .then(response => {
+                return response.json()
+            })
+            .then(data => {
+                appOutput2(data,listValue)
+            })
+            .catch(error => console.log(error));
 
+}
+
+function appOutput2(data, listValue){
+    const temp = ((data.list[listValue].main.temp)-273.15).toFixed(1);
+    const minTemp = ((data.list[listValue].main.temp_min)-273.15).toFixed(1);
+    const maxTemp = ((data.list[listValue].main.temp_max)-273.15).toFixed(1);
+    const description = data.list[listValue].weather[0].description;
+    const humidity = data.list[listValue].main.humidity;
+    const wind = data.list[listValue].wind.speed;
     if (description.indexOf('rain') != -1) {
-        document.body.classList = 'rain'
+        document.body.classList = 'rainy'
     }else if (description.indexOf('sky') != -1) {
         document.body.classList = 'sky'
     }else{
@@ -150,27 +184,31 @@ function appOutput(data){
 
     cityInfoOutput.innerHTML +=`<h1>${temp} °C</h1><p>min: ${minTemp} °C - max: ${maxTemp} °C</p>`
     weatherInfo.innerHTML = `
-    <p>${description}</p>
-    <p>Humidity: ${humidity}%</p>
-    <p>Wind: ${wind} m/s</p>
+    <h1>${description}</h1>
+    <p>Humidity: <strong>${humidity}%</strong></p>
+    <p>Wind: <strong>${wind} m/s</strong></p>
     `
 }
 
-// fetch(`http://api.openweathermap.org/geo/1.0/direct?q='donzdorf',de&appid=cb6290f61d4fa147d11cadfa50f8d548`)
-//         .then(response => {
-//             return response.json()
-//         })
-//         .then(location => {
-//             console.log(location[0].lat);
-//             console.log(location[0].lon);
-//         })
-//         .catch(error => console.log(error));
+function appOutput(data){
+    const temp = ((data.main.temp)-273.15).toFixed(1);
+    const minTemp = ((data.main.temp_min)-273.15).toFixed(1);
+    const maxTemp = ((data.main.temp_max)-273.15).toFixed(1);
+    const description = data.weather[0].description;
+    const humidity = data.main.humidity;
+    const wind = data.wind.speed;
+    if (description.indexOf('rain') != -1) {
+        document.body.classList = 'rainy'
+    }else if (description.indexOf('sky') != -1) {
+        document.body.classList = 'sky'
+    }else{
+        document.body.classList = 'cloudy'
+    }
 
-//         fetch('https://api.openweathermap.org/data/2.5/forecast/daily?lat=48.6856725&lon=9.8107595&cnt=5&appid=cb6290f61d4fa147d11cadfa50f8d548')
-//         .then(response => {
-//             return response.json()
-//         })
-//         .then(data => {
-//             console.log(data);
-//         })
-//         .catch(error => console.log(error));
+    cityInfoOutput.innerHTML +=`<h1>${temp} °C</h1><p>min: ${minTemp} °C - max: ${maxTemp} °C</p>`
+    weatherInfo.innerHTML = `
+    <h1>${description}</h1>
+    <p>Humidity: <strong>${humidity}%</strong></p>
+    <p>Wind: <strong>${wind} m/s</strong></p>
+    `
+}
