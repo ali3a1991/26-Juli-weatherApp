@@ -117,7 +117,7 @@ header{
 }
 
 
-.sec{
+.sec-hand{
     width: 150px;
     height: 150px;
     display: flex;
@@ -127,13 +127,13 @@ header{
 
     div{
         width: 2px;
-        height: 100px;
+        height: 98px;
         background-color: rgb(219, 0, 0);
         border-radius: 1px 1px 0 0;
     }
 }
 
-.min{
+.min-hand{
     width: 130px;
     height: 130px;
     display: flex;
@@ -143,13 +143,13 @@ header{
 
     div{
         width: 3px;
-        height: 90px;
+        height: 86px;
         background-color: rgb(219, 168, 0);
         border-radius: 2px 2px 0 0;
     }
 }
 
-.hour{
+.hour-hand{
     width: 110px;
     height: 110px;
     display: flex;
