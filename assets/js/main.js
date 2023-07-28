@@ -60,7 +60,7 @@ setInterval(() => {
 dayList[0].classList = 'listSelected'
 let cityName = 'Berlin';
 let geoApiUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${cityName},de&appid=${apiKey}`
-cityLoction(cityName)
+cityLoction()
 
 // =========================================== Coming Days
 for (let i = 1; i < 6; i++) {
@@ -71,42 +71,30 @@ for (let i = 1; i < 6; i++) {
 
 dayList.forEach(list => {
     list.addEventListener('click', (event) => {
-        dayList.forEach(li => li.classList= 'dayList')
-        event.target.classList = 'listSelected'
-        let listValue = list.value
+        dayList.forEach(li => li.classList= 'dayList');
+        event.target.classList = 'listSelected';
+        let listValue = list.value;
+
         if (listValue == -1) {
-            cityLoction(cityName)
+            cityLoction();
         }else{
-            cityLoction2(cityName, listValue)
+            cityLoction(listValue);
         }
     })
 })
 
-function cityLoction2(cityNamePara, listValue) {
-    fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${cityNamePara},de&appid=${apiKey}`)
-        .then(response => {
-            return response.json()
-        })
-        .then(location => {
-            cityInfoOutput.innerHTML =`
-            <h1>Weather in ${location[0].name}</h1>
-            <h3>${location[0].state} / ${location[0].country}</h3>
-            `;
-            const cityInfoPara = `http://api.openweathermap.org/data/2.5/forecast?lat=${location[0].lat}&lon=${location[0].lon}&cnt=5&appid=${apiKey}`
-            cityInfo2(cityInfoPara, listValue)
-        })
-        .catch(error => console.log(error));
-}
-
+// =========================================== Event Listener
 button.addEventListener('click', () => {
-    dayList.forEach(li => li.classList= 'dayList')
-    dayList[0].classList = 'listSelected'
+    dayList.forEach(li => li.classList= 'dayList');
+    dayList[0].classList = 'listSelected';
+
     if (cityNameInput.value == '') {
         return
     }else{
         cityName = cityNameInput.value;
     }
-    cityLoction(cityName)
+    geoApiUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${cityName},de&appid=${apiKey}`
+    cityLoction();
 })
 
 document.body.addEventListener('keypress', (event) => {
@@ -116,67 +104,80 @@ document.body.addEventListener('keypress', (event) => {
         }else{
             dayList.forEach(li => li.classList= 'dayList')
         }
+
         dayList[0].classList = 'listSelected'
         cityName = cityNameInput.value;
-        cityLoction(cityName)
+        geoApiUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${cityName},de&appid=${apiKey}`
+
+        cityLoction(geoApiUrl)
     }
 })
 
-function cityLoction(cityNamePara) {
-    fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${cityNamePara},de&appid=${apiKey}`)
+// =========================================== Functions
+function cityLoction(listValue) {
+    fetch(geoApiUrl)
         .then(response => {
-            return response.json()
+            return response.json();
         })
         .then(location => {
+            let weatherApiUrl;
+
             cityInfoOutput.innerHTML =`
             <h1>Weather in ${location[0].name}</h1>
             <h3>${location[0].state} / ${location[0].country}</h3>
             `;
-            
-            const cityInfoPara = `https://api.openweathermap.org/data/2.5/weather?lat=${location[0].lat}&lon=${location[0].lon}&appid=${apiKey}`
-            cityInfo(cityInfoPara)
+
+            if (listValue == undefined) {
+                weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${location[0].lat}&lon=${location[0].lon}&appid=${apiKey}`;
+                cityInfo(weatherApiUrl);
+            }else{
+                weatherApiUrl = `http://api.openweathermap.org/data/2.5/forecast?lat=${location[0].lat}&lon=${location[0].lon}&cnt=5&appid=${apiKey}`;
+                cityInfo(weatherApiUrl, listValue);
+            }
         })
         .catch(error => console.log(error));
 }
 
-function cityInfo(url){
-    fetch(url)
-            .then(response => {
-                return response.json()
-            })
-            .then(data => {
+function cityInfo(weatherApiUrl, listValue){
+    fetch(weatherApiUrl)
+        .then(response => {
+            return response.json()
+        })
+        .then(data => {
+            if (listValue == undefined) {
                 appOutput(data)
-            })
-            .catch(error => console.log(error));
-
+            }else{
+                appOutput(data,listValue)
+            }
+        })
+        .catch(error => console.log(error));
 }
 
-function cityInfo2(url, listValue){
-    fetch(url)
-            .then(response => {
-                return response.json()
-            })
-            .then(data => {
-                appOutput2(data,listValue)
-            })
-            .catch(error => console.log(error));
+function appOutput(data, listValue){
+    let temp;
+    let minTemp;
+    let maxTemp;
+    let description;
+    let humidity;
+    let wind;
 
-}
-
-function appOutput2(data, listValue){
-    const temp = ((data.list[listValue].main.temp)-273.15).toFixed(1);
-    const minTemp = ((data.list[listValue].main.temp_min)-273.15).toFixed(1);
-    const maxTemp = ((data.list[listValue].main.temp_max)-273.15).toFixed(1);
-    const description = data.list[listValue].weather[0].description;
-    const humidity = data.list[listValue].main.humidity;
-    const wind = data.list[listValue].wind.speed;
-    if (description.indexOf('rain') != -1) {
-        document.body.classList = 'rainy'
-    }else if (description.indexOf('sky') != -1) {
-        document.body.classList = 'sky'
+    if (listValue == undefined) {
+        temp = ((data.main.temp)-273.15).toFixed(1);
+        minTemp = ((data.main.temp_min)-273.15).toFixed(1);
+        maxTemp = ((data.main.temp_max)-273.15).toFixed(1);
+        description = data.weather[0].description;
+        humidity = data.main.humidity;
+        wind = data.wind.speed;
     }else{
-        document.body.classList = 'cloudy'
+        temp = ((data.list[listValue].main.temp)-273.15).toFixed(1);
+        minTemp = ((data.list[listValue].main.temp_min)-273.15).toFixed(1);
+        maxTemp = ((data.list[listValue].main.temp_max)-273.15).toFixed(1);
+        description = data.list[listValue].weather[0].description;
+        humidity = data.list[listValue].main.humidity;
+        wind = data.list[listValue].wind.speed;
     }
+
+    changeBackgroundImage(description);
 
     cityInfoOutput.innerHTML +=`<h1>${temp} °C</h1><p>min: ${minTemp} °C - max: ${maxTemp} °C</p>`
     weatherInfo.innerHTML = `
@@ -186,13 +187,7 @@ function appOutput2(data, listValue){
     `
 }
 
-function appOutput(data){
-    const temp = ((data.main.temp)-273.15).toFixed(1);
-    const minTemp = ((data.main.temp_min)-273.15).toFixed(1);
-    const maxTemp = ((data.main.temp_max)-273.15).toFixed(1);
-    const description = data.weather[0].description;
-    const humidity = data.main.humidity;
-    const wind = data.wind.speed;
+function changeBackgroundImage(description) {
     if (description.indexOf('rain') != -1) {
         document.body.classList = 'rainy'
     }else if (description.indexOf('sky') != -1) {
@@ -200,11 +195,4 @@ function appOutput(data){
     }else{
         document.body.classList = 'cloudy'
     }
-
-    cityInfoOutput.innerHTML +=`<h1>${temp} °C</h1><p>min: ${minTemp} °C - max: ${maxTemp} °C</p>`
-    weatherInfo.innerHTML = `
-    <h1>${description}</h1>
-    <p>Humidity: <strong>${humidity}%</strong></p>
-    <p>Wind: <strong>${wind} m/s</strong></p>
-    `
 }
